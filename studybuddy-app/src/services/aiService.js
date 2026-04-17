@@ -77,7 +77,7 @@ export async function generateFlashcardsFromText(text) {
   const truncatedText = text.substring(0, 50000);
   
   const payload = {
-    model: 'llama-3.2-11b-vision-preview',
+    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: `\n\nStudy Material (PDF Text):\n${truncatedText}` }
@@ -114,7 +114,7 @@ export async function generateFlashcardsFromImage(file) {
   const base64Data = await fileToBase64(file);
   
   const payload = {
-    model: 'llama-3.2-11b-vision-preview',
+    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       {
