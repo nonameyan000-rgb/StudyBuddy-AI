@@ -1,36 +1,57 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-export const generateFlashcardsForFile = async (file) => {
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-  const isPDF = file.type === 'application/pdf';
+const SUPPORTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-  let content;
-  if (isPDF) {
+export function isImageFile(file) {
+  return SUPPORTED_IMAGE_TYPES.includes(file.type);
+}
+
+export function isPDFFile(file) {
+  return file.type === 'application/pdf';
+}
+
+export async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    const text = await new Promise((resolve) => {
-      reader.onload = async (e) => {
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function extractTextFromPDF(file) {
+  const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    reader.onload = async (e) => {
+      try {
         const pdf = await pdfjsLib.getDocument(new Uint8Array(e.target.result)).promise;
-        let t = "";
+        let text = "";
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
-          t += content.items.map(item => item.str).join(" ");
+          text += content.items.map(item => item.str).join(" ");
         }
-        resolve(t);
-      };
-      reader.readAsArrayBuffer(file);
-    });
-    content = [{ type: "text", text: `Create 10-15 flashcards from this text: ${text.substring(0, 20000)}` }];
+        resolve(text);
+      } catch (err) { reject(err); }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+export const generateFlashcardsForFile = async (file) => {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  let content;
+
+  if (isPDFFile(file)) {
+    const text = await extractTextFromPDF(file);
+    content = [{ type: "text", text: `Create 15 flashcards from this text. Return ONLY JSON array: [{\"front\": \"...\", \"back\": \"...\"}]. Text: ${text.substring(0, 20000)}` }];
   } else {
-    const reader = new FileReader();
-    const base64 = await new Promise((resolve) => {
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.readAsDataURL(file);
-    });
+    const base64 = await fileToBase64(file);
     content = [
-      { type: "text", text: "Create 10-15 flashcards from this image. Return ONLY a JSON array: [{\"front\": \"...\", \"back\": \"...\"}]" },
+      { type: "text", text: "Create 15 flashcards from this image. Return ONLY JSON array." },
       { type: "image_url", image_url: { url: `data:${file.type};base64,${base64}` } }
     ];
   }
@@ -39,18 +60,14 @@ export const generateFlashcardsForFile = async (file) => {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      // САМОЕ ВАЖНОЕ: СТАБИЛЬНАЯ МОДЕЛЬ БЕЗ ПРИПИСКИ PREVIEW
       model: "llama-3.2-11b-vision",
       messages: [{ role: "user", content }],
-      temperature: 0.1,
       response_format: { type: "json_object" }
     })
   });
 
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || "Groq Error");
-
-  const rawContent = data.choices[0].message.content;
-  const parsed = JSON.parse(rawContent);
-  return parsed.cards || parsed; // Берем массив карточек
+  if (!response.ok) throw new Error(data.error?.message || "AI Error");
+  const parsed = JSON.parse(data.choices[0].message.content);
+  return parsed.cards || parsed;
 };
