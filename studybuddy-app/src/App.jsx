@@ -127,7 +127,11 @@ function Dashboard() {
     setBlobUrl(null);
     if (doc.storage_path) {
       downloadDocumentBlob(doc.storage_path).then(blob => {
-        if (blob) setBlobUrl(URL.createObjectURL(blob));
+        if (blob) {
+          setBlobUrl(URL.createObjectURL(blob));
+          // Attach blob as rawFile so handleGenerate has data to process!
+          setActiveDocument(prev => ({ ...prev, rawFile: blob }));
+        }
       });
     }
     try {
