@@ -77,7 +77,7 @@ export async function generateFlashcardsFromText(text) {
   const truncatedText = text.substring(0, 50000);
   
   const payload = {
-    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    model: 'llama-3.2-90b-vision-preview',
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: `\n\nStudy Material (PDF Text):\n${truncatedText}` }
@@ -99,6 +99,7 @@ export async function generateFlashcardsFromText(text) {
   }
 
   const data = await response.json();
+  console.log("Full Groq API Response:", data);
   const outputText = data.choices[0].message.content;
 
   return parseFlashcardsFromResponse(outputText);
@@ -114,7 +115,7 @@ export async function generateFlashcardsFromImage(file) {
   const base64Data = await fileToBase64(file);
   
   const payload = {
-    model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    model: 'llama-3.2-90b-vision-preview',
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       {
@@ -142,6 +143,7 @@ export async function generateFlashcardsFromImage(file) {
   }
 
   const data = await response.json();
+  console.log("Full Groq API Response:", data);
   const outputText = data.choices[0].message.content;
 
   return parseFlashcardsFromResponse(outputText);
