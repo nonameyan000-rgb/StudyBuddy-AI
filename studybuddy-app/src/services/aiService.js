@@ -76,7 +76,7 @@ export async function generateFlashcardsFromText(text) {
   if (!apiKey) throw new Error("Missing VITE_GEMINI_API_KEY in environment variables.");
 
   const truncatedText = text.substring(0, 50000);
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey, httpOptions: { apiVersion: 'v1beta' } });
 
   const response = await ai.models.generateContent({
     model: 'gemini-1.5-flash',
@@ -102,7 +102,7 @@ export async function generateFlashcardsFromImage(file) {
   if (!apiKey) throw new Error("Missing VITE_GEMINI_API_KEY in environment variables.");
 
   const base64Data = await fileToBase64(file);
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey, httpOptions: { apiVersion: 'v1beta' } });
 
   const response = await ai.models.generateContent({
     model: 'gemini-1.5-flash',
