@@ -164,7 +164,7 @@ function parseFlashcardsFromResponse(outputText) {
 
     return flashcards;
   } catch (err) {
-    console.error("Failed to parse AI response:", outputText);
+    console.error("Failed to parse AI response:", err, outputText);
     throw new Error("AI returned an invalid format. Try again or use a different document.");
   }
 }
