@@ -79,7 +79,7 @@ export async function generateFlashcardsFromText(text) {
   const ai = new GoogleGenAI({ apiKey, httpOptions: { apiVersion: 'v1beta' } });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-lite',
+    model: 'gemini-2.0-flash',
     contents: [
       {
         parts: [
@@ -105,7 +105,7 @@ export async function generateFlashcardsFromImage(file) {
   const ai = new GoogleGenAI({ apiKey, httpOptions: { apiVersion: 'v1beta' } });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-lite',
+    model: 'gemini-2.0-flash',
     contents: [
       {
         parts: [
